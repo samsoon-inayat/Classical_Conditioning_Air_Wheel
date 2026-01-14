@@ -31,9 +31,13 @@ for an = 1:numel(animal)
                     'Could not find %s for animal %d', in_file, an);
                 continue;
             end
+            try
             thisfile = animal(an).video.led.(cam);
             b.led.(cam) = readtable(thisfile);
             b.led_sig.(cam) = extract_led_from_roi(b.led.(cam), 60);
+            catch
+                disp('LED signal not extracted')
+            end
 
     end
 
