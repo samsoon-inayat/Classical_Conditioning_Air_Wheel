@@ -17,7 +17,7 @@ pdata_dir = fullfile(main_dir,'PData'); mD.pdata_dir = pdata_dir;
 adata_dir = fullfile(main_dir,'AData'); mD.adata_dir = adata_dir;
 
 animal_list = {'NML_04','NML_05','NML_06'};
-date_list = {'2026_01_12','2026_01_12','2026_01_12'};
+date_list = {'2026_01_14','2026_01_14','2026_01_14'};
 
 animal = get_exp_info(mD,animal_list,date_list);
 

@@ -9,7 +9,7 @@ animal = evalin('base','animal');
 n = 0;
 
 %%
-b = animal(2).b;
+b = animal(3).b;
 b.dist = b.encoderCount * pi * 32/b.countsPerRev; % in cm
 b.speed =  diff(b.dist)./diff(b.t); % in cm/sec
 b.speed = double([0;b.speed]);

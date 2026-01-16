@@ -271,3 +271,119 @@ ylabel({'Avg. Speed'});
 save_pdf(ff.hf,mData.pdf_folder,sprintf('bar_graphs.pdf'),600);
 
 
+%%
+% Number of animals
+nAnimals = numel(animal);
+
+% Distinct colors for each animal
+colors = lines(nAnimals);
+
+figure(100);clf;
+hold on
+
+for a = 1:nAnimals
+    
+    % Extract b struct for this animal
+    b = animal(a).b;
+    if a == 1
+        b.Air_f(1) = []
+    end
+    
+    nTrials = numel(b.Air_r);
+    
+    meanOn  = nan(nTrials,1);
+    meanOff = nan(nTrials,1);
+    
+    for t = 1:nTrials
+        
+        % -------- Air ON --------
+        meanOn(t) = mean( ...
+            b.speed(b.Air_r(t):b.Air_f(t)), ...
+            'omitnan');
+        
+        % -------- Air OFF --------
+        if t < nTrials
+            meanOff(t) = mean( ...
+                b.speed(b.Air_f(t):b.Air_r(t+1)), ...
+                'omitnan');
+        end
+    end
+    
+    % -------- Plotting --------
+    % Plot OFF first (dotted, underneath)
+    plot(meanOff, ':', ...
+        'Color', colors(a,:), ...
+        'LineWidth', 1.5)
+    
+    % Plot ON last (solid, on top)
+    plot(meanOn, '-', ...
+        'Color', colors(a,:), ...
+        'LineWidth', 2.5)
+end
+
+% -------- Figure formatting --------
+xlabel('Trial Number')
+ylabel('Mean Speed')
+title('Mean Speed per Trial: Air ON (solid) vs Air OFF (dotted)')
+grid on
+
+% Legend (one entry per animal, color-coded)
+legend({animal.ID}, 'Location', 'best')
+%%
+% Number of animals
+nAnimals = numel(animal);
+
+% Colors
+colors = lines(nAnimals);
+
+figure(100);clf;
+hold on
+
+for a = 1:nAnimals
+    
+    b = animal(a).b;
+    if a == 1
+        b.Air_f(1) = []
+    end
+    
+    nTrials = numel(b.Air_r);
+    
+    distOn  = nan(nTrials,1);
+    distOff = nan(nTrials,1);
+    
+    for t = 1:nTrials
+        
+        % -------- Air ON distance --------
+        idx_on_start = b.Air_r(t);
+        idx_on_end   = b.Air_f(t);
+        
+        distOn(t) = b.dist(idx_on_end) - b.dist(idx_on_start);
+        
+        % -------- Air OFF distance --------
+        if t < nTrials
+            idx_off_start = b.Air_f(t);
+            idx_off_end   = b.Air_r(t+1);
+            
+            distOff(t) = b.dist(idx_off_end) - b.dist(idx_off_start);
+        end
+    end
+    
+    % -------- Plot --------
+    % OFF first (dotted, underneath)
+    plot(distOff, ':', ...
+        'Color', colors(a,:), ...
+        'LineWidth', 1.5)
+    
+    % ON last (solid, on top)
+    plot(distOn, '-', ...
+        'Color', colors(a,:), ...
+        'LineWidth', 2.5)
+end
+
+% -------- Formatting --------
+xlabel('Trial Number')
+ylabel('Distance Covered')
+title('Distance per Trial: Air ON (solid) vs Air OFF (dotted)')
+grid on
+
+legend({animal.ID}, 'Location', 'best')
