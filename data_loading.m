@@ -34,6 +34,7 @@ mD.pdf_folder = mD.adata_dir;
 mD.pd_folder = mD.pdata_dir;
 mD.magfac = 1;
 mData = mD;
+mData.ispc = 1;
 disp('Done');
 
 %%
