@@ -11,14 +11,14 @@ clear all
 main_dir = 'E:\GoogleDrive\InayatSamsoon\UNLV\Classical_Conditioning';
 mD.main_dir = main_dir;
 
-rdata_dir = 'X:\Research\Neuromomentum_Cognemotion Lab\Raw_Data_Backup\Classical_Conditioning';
+% rdata_dir = 'X:\Research\Neuromomentum_Cognemotion Lab\Raw_Data_Backup\Classical_Conditioning';
+rdata_dir = 'E:\Data\UNLV\Classical_Conditioning';
 mD.rdata_dir = rdata_dir;
 pdata_dir = fullfile(main_dir,'PData'); mD.pdata_dir = pdata_dir;
 adata_dir = fullfile(main_dir,'AData'); mD.adata_dir = adata_dir;
 
 animal_list = {'NML_04','NML_05','NML_06'};
-date_list = {'2026_01_16','2026_01_16','2026_01_16'};
-animal = get_exp_info(mD,animal_list,date_list);
+animal = get_exp_info_multi_day(mD,animal_list);
 
 disp('Done');
 %%

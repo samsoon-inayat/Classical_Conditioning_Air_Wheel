@@ -9,7 +9,235 @@ animal = evalin('base','animal');
 n = 0;
 
 %%
-b = animal(3).b;
+for a = 1:numel(animal)
+    fprintf('Processing %s\n', animal(a).ID);
+    for s = 1:numel(animal(a).session)
+         fprintf('  Session %s\n', animal(a).session(s).date);
+
+        % -----------------------------
+        % Check that b exists and is valid
+        % -----------------------------
+        if ~isfield(animal(a).session(s), 'b') || isempty(animal(a).session(s).b)
+            warning('%s %s: b is missing or empty — skipping session', ...
+                animal(a).ID, animal(a).session(s).date);
+            continue;
+        end
+        b = animal(a).session(s).b;% = b;
+        % Optional: minimal required fields check
+        requiredFields = {'Air_r','Air_f','speed_path_cms','dist_path_cm','fs'};
+        if ~all(isfield(b, requiredFields))
+            warning('%s %s: b missing required fields — skipping session', ...
+                animal(a).ID, animal(a).session(s).date);
+            continue;
+        end
+
+        % -----------------------------
+        % Compute performance
+        % -----------------------------
+        try
+            [perf, T, perfMetrics] = compute_air_trial_performance(b);
+        catch ME
+            warning('%s %s: performance computation failed (%s)', ...
+                animal(a).ID, animal(a).session(s).date, ME.message);
+            continue;
+        end
+
+        % -----------------------------
+        % Store results
+        % -----------------------------
+        animal(a).session(s).perf        = perf;
+        animal(a).session(s).T           = T;
+        animal(a).session(s).perfMetrics = perfMetrics;
+    end
+end
+
+%%
+figure(100); clf; hold on;
+
+sis = 17:21;   % real session indices (air-driven sessions)
+
+for a = 1:3
+    meanARI = arrayfun(@(s) s.perfMetrics.meanARI, ...
+                       animal(a).session(sis));
+    plot(sis, meanARI, '-o', 'DisplayName', animal(a).ID);
+end
+
+xlabel('Session');
+ylabel('Mean ARI');
+legend('Location','best');
+grid on;
+
+%%
+figure(200); clf; hold on;
+
+sis = 17:21;   % air-driven sessions
+
+for a = 1:3
+
+    x = [];  % Mean ARI
+    y = [];  % Learning slope
+
+    for s = sis
+        if s <= numel(animal(a).session) && ...
+           isfield(animal(a).session(s),'perfMetrics')
+
+            pm = animal(a).session(s).perfMetrics;
+
+            x(end+1) = pm.meanARI; %#ok<SAGROW>
+            y(end+1) = pm.learningSlope;
+        end
+    end
+
+    scatter(x, y, 80, 'filled', ...
+        'DisplayName', animal(a).ID);
+
+end
+
+xlabel('Mean ARI (Air responsiveness)');
+ylabel('Learning slope (within-session)');
+title('Behavioral phenotypes during air-driven sessions');
+legend('Location','best');
+grid on;
+
+
+%%
+sis = 17:21;                 % air-driven sessions
+nSess = numel(sis);
+nAnim = numel(animal);
+
+% Preallocate: rows = animals, cols = sessions × phases
+M = nan(nAnim, nSess*2);
+
+for a = 1:nAnim
+    col = 1;
+    for i = 1:nSess
+        s = sis(i);
+
+        if s <= numel(animal(a).session) && ...
+           isfield(animal(a).session(s),'perf')
+
+            % Mean speeds (session averages)
+            M(a,col)   = nanmean(animal(a).session(s).perf.airOn.meanSpeed);
+            M(a,col+1) = nanmean(animal(a).session(s).perf.airOff.meanSpeed);
+        end
+        col = col + 2;
+    end
+end
+
+tcolors = {'b','m'};
+data_C = M;%[meanSpeed_ON meanSpeed_OFF];
+[within,dvn,xlabels] = make_within_table({'Session','Air_Phase'},[5,2]);
+dataT = make_between_table({data_C},dvn);
+ra = RMA(dataT,within,{0.05,{'hsd'}});
+%     ra.ranova
+print_for_manuscript(ra)
+
+%%
+sis   = 17:21;              % air-driven sessions
+nSess = numel(sis);
+nAnim = numel(animal);
+
+Y       = [];
+Session = [];
+Phase   = {};
+Animal  = {};
+
+for a = 1:nAnim
+    for i = 1:nSess
+        s = sis(i);
+
+        if s <= numel(animal(a).session) && ...
+           isfield(animal(a).session(s),'perf')
+
+            % ---- Air ON ----
+            Y(end+1,1) = nanmean(animal(a).session(s).perf.airOn.meanSpeed);
+            Session(end+1,1) = i;
+            Phase{end+1,1}   = 'ON';
+            Animal{end+1,1}  = animal(a).ID;
+
+            % ---- Air OFF ----
+            Y(end+1,1) = nanmean(animal(a).session(s).perf.airOff.meanSpeed);
+            Session(end+1,1) = i;
+            Phase{end+1,1}   = 'OFF';
+            Animal{end+1,1}  = animal(a).ID;
+        end
+    end
+end
+
+tbl = table(Y, Session, categorical(Phase), categorical(Animal));
+tbl.Properties.VariableNames = {'Y','Session','Phase','Animal'};
+tbl.Session = categorical(tbl.Session);
+tbl.Phase   = categorical(tbl.Phase);
+tbl.Animal  = categorical(tbl.Animal)
+lme = fitlme(tbl, 'Y ~ Phase + Session + (1|Animal)');
+anova(lme)
+
+%% LME including trials
+
+sis = 17:21;
+% sis = [1:9 11:16];
+
+Y = [];
+Animal = {};
+Session = [];
+Trial = [];
+Phase = {};
+
+for a = 1:numel(animal)
+    for s = sis
+        if s > numel(animal(a).session), continue; end
+        if ~isfield(animal(a).session(s),'T') || isempty(animal(a).session(s).T), continue; end
+
+        T = animal(a).session(s).T;
+
+        for i = 1:height(T)
+            % ON row
+            Y(end+1,1) = T.AirOn_MeanSpeed(i);
+            Animal{end+1,1} = animal(a).ID;
+            Session(end+1,1) = s;
+            Trial(end+1,1) = T.Trial(i);
+            Phase{end+1,1} = 'ON';
+
+            % OFF row
+            Y(end+1,1) = T.AirOff_MeanSpeed(i);
+            Animal{end+1,1} = animal(a).ID;
+            Session(end+1,1) = s;
+            Trial(end+1,1) = T.Trial(i);
+            Phase{end+1,1} = 'OFF';
+        end
+    end
+end
+
+tbl = table(Y, categorical(Animal), categorical(Session), Trial, categorical(Phase), ...
+            'VariableNames', {'Y','Animal','Session','Trial','Phase'});
+
+
+lme1 = fitlme(tbl, 'Y ~ Phase + Trial + Session + (1|Animal) + (1|Animal:Session)');
+anova(lme1)
+
+lme2 = fitlme(tbl, 'Y ~ Phase*Trial + Session + (1|Animal) + (1|Animal:Session)');
+anova(lme2)
+
+lme3 = fitlme(tbl, 'Y ~ Phase*Trial + Session + (Phase|Animal) + (1|Animal:Session)');
+compare(lme2, lme3)
+
+% randomEffects(lme3)
+
+%%
+sis = [1:9 11:16];
+
+for a = 1:numel(animal)
+    for s = sis
+        ms(a,s) = mean(animal(a).session(s).T.AirOn_MeanSpeed,'omitnan');
+    end
+end
+
+figure(300);clf; plot(var(ms,0,1),'o-');
+xlabel('Session'); ylabel('Across-animal variance');
+%%
+hab = compute_habituation_metrics(animal,sis);
+
+%%
 b.dist = b.encoderCount * pi * 32/b.countsPerRev; % in cm
 b.speed =  diff(b.dist)./diff(b.t); % in cm/sec
 b.speed = double([0;b.speed]);

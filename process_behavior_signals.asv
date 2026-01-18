@@ -135,44 +135,8 @@ b.countsPerRev = S.countsPerRev;
 % Distance (in revolutions)
 b.dist_rev = double(b.encoderCount) / b.countsPerRev;
 
-% -----------------------
-% Encoder / kinematics (WINDOWED, BEHAVIORAL)
-% -----------------------
 
-wheelDiameter_cm = 32;
-wheelCircumference_cm = pi * wheelDiameter_cm;
-cmPerCount = wheelCircumference_cm / b.countsPerRev;
-
-enc = double(b.encoderCount(:));
-dEnc = [0; diff(enc)];          % signed per-sample encoder increments
-
-% -----------------------
-% Distance (always valid)
-% -----------------------
-b.dist_net_cm  = enc * cmPerCount;                 % signed displacement
-b.dist_path_cm = cumsum(abs(dEnc)) * cmPerCount;  % total path length
-
-% -----------------------
-% Speed (define time scale!)
-% -----------------------
-win_ms = 100;                                     % <-- behavioral window
-win = round(win_ms/1000 * b.fs);
-
-% Windowed encoder displacement
-dEnc_win = movsum(dEnc, win, 'omitnan');
-
-% Speed = displacement / time
-b.speed_net_cms  = (dEnc_win * cmPerCount) / (win / b.fs);
-b.speed_path_cms = (abs(dEnc_win) * cmPerCount) / (win / b.fs);
-
-b.speed_window_ms = win_ms;   % store metadata
-
-% -----------------------
-% Direction bias (unchanged logic, now stable)
-% -----------------------
-b.bias = (b.dist_net_cm(end) - b.dist_net_cm(1)) / ...
          (b.dist_path_cm(end) - b.dist_path_cm(1) + eps);
-
 
 % -----------------------
 % Metadata
