@@ -175,7 +175,7 @@ anova(lme)
 %% LME including trials
 
 sis = 17:21;
-sis = [1:9 11:16];
+% sis = [1:9 11:16];
 
 Y = [];
 Animal = {};
