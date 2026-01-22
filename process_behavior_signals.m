@@ -22,7 +22,7 @@ for a = 1:numel(animal)
             continue;
         end
 
-        fprintf('  Session %s\n', animal(a).session(s).date);
+        fprintf('Processing %s - Session %s\n', animal(a).ID,animal(a).session(s).date);
 
         % Build behavioral struct
         b = make_behavior_struct(matFile);
