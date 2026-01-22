@@ -8,11 +8,13 @@ disp('Done')
 clear all
 % clc
 %%
-main_dir = 'E:\GoogleDrive\InayatSamsoon\UNLV\Classical_Conditioning';
+% main_dir = 'E:\GoogleDrive\InayatSamsoon\UNLV\Classical_Conditioning';
+main_dir = '/mnt/pdata/Classical_Conditioning';
 mD.main_dir = main_dir;
 
 % rdata_dir = 'X:\Research\Neuromomentum_Cognemotion Lab\Raw_Data_Backup\Classical_Conditioning';
-rdata_dir = 'E:\Data\UNLV\Classical_Conditioning';
+% rdata_dir = 'E:\Data\UNLV\Classical_Conditioning';
+rdata_dir = '/mnt/data/Classical_Conditioning';
 mD.rdata_dir = rdata_dir;
 pdata_dir = fullfile(main_dir,'PData'); mD.pdata_dir = pdata_dir;
 adata_dir = fullfile(main_dir,'AData'); mD.adata_dir = adata_dir;

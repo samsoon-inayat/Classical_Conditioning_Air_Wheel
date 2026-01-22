@@ -62,9 +62,7 @@ for a = 1:numel(animal_list)
             mkdir(sess.pdir)
         end
         sess.adir = fullfile(adata_dir, animal(a).ID, tdate);
-        if ~exist(sess.adir,'dir')
-            mkdir(sess.adir)
-        end
+        
         % if ~exist(sess.pdir,'dir'), mkdir(sess.pdir); end
         % if ~exist(sess.adir,'dir'), mkdir(sess.adir); end
 
